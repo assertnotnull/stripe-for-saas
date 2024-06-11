@@ -1,20 +1,19 @@
-import { serve } from '@hono/node-server'
-import { Hono } from 'hono'
-import { cors } from 'hono/cors'
-import { logger } from 'hono/logger'
-import 'dotenv/config'
+import { serve } from "@hono/node-server";
+import { Hono } from "hono";
+import { cors } from "hono/cors";
+import { logger } from "hono/logger";
+import "dotenv/config";
 
-
-import Stripe from 'stripe';
-import { HTTPException } from 'hono/http-exception';
+import Stripe from "stripe";
+import { HTTPException } from "hono/http-exception";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
-const app = new Hono()
-app.use('/*', cors()) // optional, only required if frontend is on different domain/port
-app.use(logger()) // optional logging middleware
+const app = new Hono();
+app.use("/*", cors()); // optional, only required if frontend is on different domain/port
+app.use(logger()); // optional logging middleware
 
-app.get('/', (c) => {
+app.get("/", (c) => {
   const html = `
   <!DOCTYPE html>
   <html>
@@ -29,7 +28,7 @@ app.get('/', (c) => {
       <script>
         const checkoutButton = document.getElementById('checkoutButton');
         checkoutButton.addEventListener('click', async () => {
-          const response = await fetch('/checkout', {
+          const response = await fetch('/subscribe', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -44,32 +43,29 @@ app.get('/', (c) => {
   </html>
 `;
   return c.html(html);
-})
+});
 
-app.get('/success', (c) => {
-  return c.text('Success!')
-})
+app.get("/success", (c) => {
+  return c.text("Success!");
+});
 
-app.get('/cancel', (c) => {
-  return c.text('Hello Hono!')
-})
+app.get("/cancel", (c) => {
+  return c.text("Hello Hono!");
+});
 
-
-app.post('/checkout', async (c) => {
-  
-
+app.post("/checkout", async (c) => {
   try {
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
+      payment_method_types: ["card"],
       line_items: [
         {
-          price: 'price_1OqkU6BF7AptWZlcpIINrWBU',
+          price: "price_1P474lP2uzVsjiHbPRvndOHd",
           quantity: 1,
         },
       ],
-      mode: 'payment',
-      success_url: 'http://localhost:3000/success',
-      cancel_url: 'http://localhost:3000//cancel',
+      mode: "payment",
+      success_url: "http://localhost:3000/success",
+      cancel_url: "http://localhost:3000/cancel",
     });
 
     return c.json(session);
@@ -79,22 +75,21 @@ app.post('/checkout', async (c) => {
   }
 });
 
-app.post('/subscribe', async (c) => {
-
-  const { price_id } = await c.req.json();
+app.post("/subscribe", async (c) => {
+  // const { price_id } = await c.req.json();
 
   try {
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
+      payment_method_types: ["card"],
       line_items: [
         {
-          price: price_id,
+          price: "price_1P47DEP2uzVsjiHbxyGxguIs",
           quantity: 1,
         },
       ],
-      mode: 'subscription',
-      success_url: 'http://localhost:3000/success',
-      cancel_url: 'http://localhost:3000//cancel',
+      mode: "subscription",
+      success_url: "http://localhost:3000/success",
+      cancel_url: "http://localhost:3000/cancel",
     });
 
     return c.json(session);
@@ -104,24 +99,26 @@ app.post('/subscribe', async (c) => {
   }
 });
 
-
-
-app.post('/webhook', async (c) => {
+app.post("/webhook", async (c) => {
   const rawBody = await c.req.text();
-  const signature = c.req.header('stripe-signature');
+  const signature = c.req.header("stripe-signature");
 
   let event;
   try {
-    event = stripe.webhooks.constructEvent(rawBody, signature!, process.env.STRIPE_WEBHOOK_SECRET!);
+    event = stripe.webhooks.constructEvent(
+      rawBody,
+      signature!,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    );
   } catch (error: any) {
     console.error(`Webhook signature verification failed: ${error.message}`);
-    throw new HTTPException(400)
-  } 
+    throw new HTTPException(400);
+  }
 
   // Handle the checkout.session.completed event
-  if (event.type === 'checkout.session.completed') {
+  if (event.type === "checkout.session.completed") {
     const session = event.data.object;
-    console.log(session)
+    console.log(session);
 
     // TODO Fulfill the purchase
     // Update Database with order details
@@ -133,26 +130,23 @@ app.post('/webhook', async (c) => {
     // Etc.
   }
 
-  if (event.type === 'customer.subscription.updated') {
+  if (event.type === "customer.subscription.updated") {
     const subscription = event.data.object;
-    console.log(subscription)
+    console.log(subscription);
   }
 
-  if (event.type === 'customer.subscription.deleted') {
+  if (event.type === "customer.subscription.deleted") {
     const subscription = event.data.object;
-    console.log(subscription)
+    console.log(subscription);
   }
 
+  return c.text("success");
+});
 
-  return c.text('success');
-})
-
-
-
-const port = 3000
-console.log(`Server is running on port ${port}`)
+const port = 3000;
+console.log(`Server is running on port http://localhost:${port}`);
 
 serve({
   fetch: app.fetch,
-  port
-})
+  port,
+});

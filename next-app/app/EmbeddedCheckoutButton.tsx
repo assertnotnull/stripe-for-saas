@@ -20,7 +20,7 @@ export default function EmbeddedCheckoutButton() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ priceId: "price_1OtHkdBF7AptWZlcIjbBpS8r" }),
+      body: JSON.stringify({ priceId: "price_1P5quBP2uzVsjiHbnFuGb6nA" }),
     })
       .then((res) => res.json())
       .then((data) => data.client_secret);
@@ -48,7 +48,10 @@ export default function EmbeddedCheckoutButton() {
           <h3 className="font-bold text-lg">Embedded Checkout</h3>
           <div className="py-4">
             {showCheckout && (
-              <EmbeddedCheckoutProvider stripe={stripePromise} options={options}>
+              <EmbeddedCheckoutProvider
+                stripe={stripePromise}
+                options={options}
+              >
                 <EmbeddedCheckout />
               </EmbeddedCheckoutProvider>
             )}

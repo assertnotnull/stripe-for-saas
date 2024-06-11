@@ -5,10 +5,12 @@ import { supabase } from "../../utils/supabaseClient";
 import { User } from "@supabase/supabase-js";
 import PortalButton from "../portal/PortalButton";
 import LoginForm from "./LoginForm";
+import { useAtom } from "jotai";
+import { loggedInUserAtom, stripeCustomerAtom } from "../atoms";
 
 export default function UserProfile() {
-  const [user, setUser] = useState<User | null>(null);
-  const [stripeCustomer, setStripeCustomer] = useState<any>(null);
+  const [user, setUser] = useAtom(loggedInUserAtom);
+  const [stripeCustomer, setStripeCustomer] = useAtom(stripeCustomerAtom);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -25,7 +27,7 @@ export default function UserProfile() {
           .single();
 
         if (error) {
-          console.log("No stripe customer data found",);
+          console.log("No stripe customer data found");
         } else {
           setStripeCustomer(stripeCustomerData);
         }
@@ -68,20 +70,24 @@ export default function UserProfile() {
             Supabase User ID: <strong>{user.id}</strong>
           </p>
           <div>
-          <button className="btn btn-secondary my-3 btn-sm" onClick={handleLogout}>
-            Logout
-          </button>
+            <button
+              className="btn btn-secondary my-3 btn-sm"
+              onClick={handleLogout}
+            >
+              Logout
+            </button>
           </div>
 
           <h2>Stripe Customer Data</h2>
-          {stripeCustomer ? (<>
-            <p>This data lives in the stripe_customers table in Supabase</p>
-            <div className="mockup-code">
-              <pre>
-                <code>{JSON.stringify(stripeCustomer, null, 2)}</code>
-              </pre>
-            </div>
-            <PortalButton />
+          {stripeCustomer ? (
+            <>
+              <p>This data lives in the stripe_customers table in Supabase</p>
+              <div className="mockup-code">
+                <pre>
+                  <code>{JSON.stringify(stripeCustomer, null, 2)}</code>
+                </pre>
+              </div>
+              <PortalButton />
             </>
           ) : (
             <div>
@@ -90,7 +96,6 @@ export default function UserProfile() {
               </p>
             </div>
           )}
-
         </>
       ) : (
         <>
@@ -98,7 +103,6 @@ export default function UserProfile() {
           <LoginForm />
         </>
       )}
-      
     </div>
   );
 }
